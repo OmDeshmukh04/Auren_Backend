@@ -1,0 +1,54 @@
+{
+  "name": "auren-households-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@types/luxon": "3.7.6",
+    "@types/node": "24.19.2",
+    "@types/pdfkit": "0.17.7",
+    "@types/pg": "8.23.1",
+    "embedded-postgres": "18.4.0-beta.17",
+    "kysely-codegen": "0.20.0",
+    "openapi-typescript": "7.13.0",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1155.0",
+    "@aws-sdk/s3-request-presigner": "3.1155.0",
+    "@fastify/cookie": "11.1.3",
+    "@fastify/cors": "11.3.1",
+    "@fastify/helmet": "13.2.0",
+    "better-auth": "1.7.12",
+    "fastify": "5.12.7",
+    "kysely": "0.29.7",
+    "luxon": "3.7.2",
+    "pdfkit": "0.20.2",
+    "pg": "8.23.1",
+    "pino": "10.4.0",
+    "zod": "4.6.7"
+  },
+  "description": "Auren Households agency platform API (/api/v1): CMS, family CRM, ATS, screening, jobs, placements, presentations, automation and reporting.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "tsx scripts/dev.ts",
+    "dev:api": "tsx watch --clear-screen=false src/server.ts",
+    "db:start": "tsx scripts/dev-db.ts",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:codegen": "tsx scripts/codegen.ts",
+    "db:seed": "tsx scripts/seed-dev.ts",
+    "owner:create": "tsx scripts/create-owner.ts",
+    "worker": "tsx src/worker.ts",
+    "contract": "tsx scripts/export-contract.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsc -p tsconfig.build.json && node -e \"require('node:fs').cpSync('migrations', 'dist/migrations', { recursive: true })\"",
+    "db:migrate:deploy": "node dist/scripts/migrate.js",
+    "start": "node dist/src/server.js"
+  }
+}

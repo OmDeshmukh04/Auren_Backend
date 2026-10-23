@@ -1,0 +1,97 @@
+# Render Blueprint for the Auren API. Render builds the `deploy` branch, which the GitHub
+# Actions workflow fast-forwards to main after CI passes. Values marked `sync: false` are
+# asked for when the Blueprint is applied; see docs/DEPLOY.md.
+services:
+  - type: web
+    name: auren-api
+    runtime: node
+    region: virginia # same AWS region as the Supabase pooler (us-east-1)
+    plan: starter # free also works but sleeps after 15 idle minutes
+    branch: deploy
+    autoDeployTrigger: commit
+    # Migrations run during the build, before the new instance takes traffic. They are
+    # additive, so the running instance keeps working if the build fails afterwards.
+    buildCommand: npm ci --include=dev && npm run build && npm run db:migrate:deploy
+    startCommand: npm start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: TRUST_PROXY
+        value: "true"
+      - key: LOG_LEVEL
+        value: info
+      # Supabase session pooler (port 5432); see docs/DEPLOY.md for the exact form.
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      - key: DATABASE_POOL_MAX
+        value: "5"
+      # Supabase signs its certificates with its own root CA; trust it rather than disabling verification.
+      - key: NODE_EXTRA_CA_CERTS
+        value: /opt/render/project/src/certs/supabase-root-2021-ca.crt
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: SIGNING_SECRET
+        generateValue: true
+      - key: CRON_SECRET
+        generateValue: true
+      # Browser-facing origin. The frontend proxies /api/* to this service, so these are the Vercel URLs.
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: PUBLIC_SITE_URL
+        sync: false
+      - key: STAFF_APP_URL
+        sync: false
+      - key: APP_ORIGINS
+        sync: false
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: EMAIL_FROM
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_WEBHOOK_SECRET
+        sync: false
+      - key: STORAGE_PROVIDER
+        value: s3
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_REGION
+        value: auto
+      - key: S3_PRIVATE_BUCKET
+        sync: false
+      - key: S3_PUBLIC_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: PUBLIC_MEDIA_BASE_URL
+        sync: false
+      # none = uploads stay quarantined until a ClamAV daemon is configured (SCANNER_PROVIDER=clamd).
+      - key: SCANNER_PROVIDER
+        value: none
+
+  # Runs the automation queue (emails, workflow steps) once a minute.
+  - type: cron
+    name: auren-runner-tick
+    runtime: node
+    region: virginia
+    plan: starter
+    branch: deploy
+    schedule: "* * * * *"
+    buildCommand: "true"
+    startCommand: node scripts/runner-tick.mjs
+    envVars:
+      # The Render URL of auren-api, e.g. https://auren-api.onrender.com
+      - key: API_ORIGIN
+        sync: false
+      - key: CRON_SECRET
+        fromService:
+          type: web
+          name: auren-api
+          envVarKey: CRON_SECRET

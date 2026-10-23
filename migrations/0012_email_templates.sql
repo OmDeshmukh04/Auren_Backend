@@ -1,0 +1,95 @@
+-- Starter email templates (version 1, published). Wording is a starting point for the owner to
+-- review; security and transactional templates are published so sign-in, invitations and
+-- acknowledgements work. Placeholders are limited to each template's allowed variables.
+
+CREATE TEMPORARY TABLE seed_templates (key text, name text, category text, vars text[], subject text, body text) ON COMMIT DROP;
+
+INSERT INTO seed_templates VALUES
+('staff.password_reset', 'Staff password reset', 'security', '{staff.displayName,links.resetPassword,agency.name}',
+ 'Reset your {{agency.name}} password',
+ E'Hello {{staff.displayName}},\n\nUse this link to choose a new password. It expires in one hour and can be used once:\n{{links.resetPassword}}\n\nIf you did not ask for this, you can ignore this email; your password will not change.\n\n{{agency.name}}'),
+('staff.invitation', 'Staff invitation', 'security', '{staff.displayName,links.acceptInvitation,agency.name,invitation.role}',
+ 'You have been invited to the {{agency.name}} workspace',
+ E'Hello {{staff.displayName}},\n\nYou have been invited to join the {{agency.name}} agency workspace as {{invitation.role}}.\n\nSet your password here (the link expires in 7 days):\n{{links.acceptInvitation}}\n\n{{agency.name}}'),
+('applicant.resume_link', 'Application resume link', 'security', '{applicant.firstName,links.resume,verification.code,draft.expiresOn,agency.name}',
+ 'Continue your {{agency.name}} application',
+ E'Hello {{applicant.firstName}},\n\nYour application is saved. To continue on any device, open this link:\n{{links.resume}}\n\nOr enter this code on the application page: {{verification.code}}\n\nThe link can be used once. Your draft is kept until {{draft.expiresOn}}.\n\nIf you did not start an application, you can ignore this email.\n\n{{agency.name}}'),
+('family.enquiry_acknowledgement', 'Family enquiry acknowledgement', 'transactional', '{contact.firstName,family.displayName,enquiry.reference,enquiry.serviceLabel,agency.name,agency.replyTo}',
+ 'We received your enquiry ({{enquiry.reference}})',
+ E'Hello {{contact.firstName}},\n\nThank you for contacting {{agency.name}} about {{enquiry.serviceLabel}}. Your reference is {{enquiry.reference}}.\n\nA member of our team will review your enquiry and contact you to arrange a consultation.\n\n{{agency.name}}'),
+('staff.new_enquiry', 'Staff alert: new enquiry', 'staff_notification', '{enquiry.reference,enquiry.serviceLabel,links.enquiry,agency.name}',
+ 'New family enquiry {{enquiry.reference}}',
+ E'A new family enquiry has been received ({{enquiry.serviceLabel}}).\n\nOpen it in the workspace:\n{{links.enquiry}}'),
+('family.enquiry_follow_up', 'Family follow-up (no response)', 'outreach', '{contact.firstName,enquiry.reference,agency.name,agency.replyTo}',
+ 'Following up on your enquiry',
+ E'Hello {{contact.firstName}},\n\nWe wanted to follow up on your recent enquiry ({{enquiry.reference}}). Reply to this email or call us whenever is convenient and we will be happy to help.\n\n{{agency.name}}'),
+('family.consultation_confirmation', 'Consultation confirmation', 'transactional', '{contact.firstName,appointment.title,appointment.when,appointment.location,agency.name}',
+ 'Your consultation is confirmed',
+ E'Hello {{contact.firstName}},\n\nYour consultation is booked for {{appointment.when}} ({{appointment.location}}).\n\nIf you need to change the time, reply to this email.\n\n{{agency.name}}'),
+('family.consultation_reminder', 'Consultation reminder', 'transactional', '{contact.firstName,appointment.when,appointment.location,agency.name}',
+ 'Reminder: consultation {{appointment.when}}',
+ E'Hello {{contact.firstName}},\n\nThis is a reminder of your consultation on {{appointment.when}} ({{appointment.location}}).\n\n{{agency.name}}'),
+('candidate.application_confirmation', 'Application confirmation', 'transactional', '{candidate.firstName,application.reference,agency.name}',
+ 'We received your application ({{application.reference}})',
+ E'Hello {{candidate.firstName}},\n\nThank you for applying to {{agency.name}}. Your application reference is {{application.reference}}.\n\nWe review every application personally and will be in touch about next steps.\n\n{{agency.name}}'),
+('staff.new_application', 'Staff alert: new application', 'staff_notification', '{application.reference,links.candidate,agency.name}',
+ 'New candidate application {{application.reference}}',
+ E'A new candidate application has been submitted.\n\nReview it in the workspace:\n{{links.candidate}}'),
+('candidate.information_request', 'Missing information request', 'transactional', '{candidate.firstName,request.items,request.message,request.deadline,agency.name}',
+ 'Information needed for your application',
+ E'Hello {{candidate.firstName}},\n\nTo continue with your application we need the following:\n{{request.items}}\n\n{{request.message}}\n\nPlease reply to this email with the items by {{request.deadline}}.\n\n{{agency.name}}'),
+('candidate.interview_confirmation', 'Interview confirmation', 'transactional', '{candidate.firstName,appointment.when,appointment.location,agency.name}',
+ 'Your interview is confirmed',
+ E'Hello {{candidate.firstName}},\n\nYour interview is booked for {{appointment.when}} ({{appointment.location}}).\n\nReply to this email if you need to reschedule.\n\n{{agency.name}}'),
+('candidate.interview_reminder', 'Interview reminder', 'transactional', '{candidate.firstName,appointment.when,appointment.location,agency.name}',
+ 'Reminder: interview {{appointment.when}}',
+ E'Hello {{candidate.firstName}},\n\nThis is a reminder of your interview on {{appointment.when}} ({{appointment.location}}).\n\n{{agency.name}}'),
+('reference.request', 'Reference request', 'outreach', '{reference.fullName,candidate.fullName,agency.name,agency.replyTo}',
+ 'Reference request for {{candidate.fullName}}',
+ E'Hello {{reference.fullName}},\n\n{{candidate.fullName}} has applied to work with families through {{agency.name}} and named you as a reference, with permission for us to contact you.\n\nCould you reply with a convenient time for a short call? Everything you share is kept confidential.\n\n{{agency.name}}'),
+('candidate.qualification_expiring', 'Qualification expiring', 'transactional', '{candidate.firstName,qualification.label,qualification.expiresOn,agency.name}',
+ 'Your {{qualification.label}} expires soon',
+ E'Hello {{candidate.firstName}},\n\nOur records show your {{qualification.label}} expires on {{qualification.expiresOn}}. When you renew it, please reply with a copy of the new certificate.\n\n{{agency.name}}'),
+('candidate.availability_refresh', 'Availability check', 'outreach', '{candidate.firstName,agency.name}',
+ 'Are you still available?',
+ E'Hello {{candidate.firstName}},\n\nWe are updating our records. Please reply to let us know whether you are currently available for new roles, and from when.\n\n{{agency.name}}'),
+('family.presentation_delivery', 'Candidate presentation', 'transactional', '{contact.firstName,family.displayName,job.title,presentation.reference,agency.name}',
+ 'Candidate profiles for your search',
+ E'Hello {{contact.firstName}},\n\nAttached are the candidate profiles we recommend for your {{job.title}} search (ref. {{presentation.reference}}).\n\nPlease keep these profiles confidential and reply with any candidates you would like to meet.\n\n{{agency.name}}'),
+('staff.presentation_feedback', 'Staff task: presentation feedback', 'staff_notification', '{presentation.reference,family.displayName,links.presentation}',
+ 'Follow up on presentation {{presentation.reference}}',
+ E'A candidate presentation was delivered. Record the family''s feedback:\n{{links.presentation}}'),
+('family.interview_reminder', 'Family interview reminder (family)', 'transactional', '{contact.firstName,appointment.when,appointment.location,agency.name}',
+ 'Reminder: candidate interview {{appointment.when}}',
+ E'Hello {{contact.firstName}},\n\nThis is a reminder of your candidate interview on {{appointment.when}} ({{appointment.location}}).\n\n{{agency.name}}'),
+('candidate.family_interview_reminder', 'Family interview reminder (candidate)', 'transactional', '{candidate.firstName,appointment.when,appointment.location,agency.name}',
+ 'Reminder: family interview {{appointment.when}}',
+ E'Hello {{candidate.firstName}},\n\nThis is a reminder of your interview with a family on {{appointment.when}} ({{appointment.location}}).\n\n{{agency.name}}'),
+('placement.start_confirmation_family', 'Placement start (family)', 'transactional', '{contact.firstName,job.title,placement.startDate,agency.name}',
+ 'Your placement starts {{placement.startDate}}',
+ E'Hello {{contact.firstName}},\n\nWe are pleased to confirm your {{job.title}} placement begins on {{placement.startDate}}. We will check in with you after the first weeks.\n\n{{agency.name}}'),
+('placement.start_confirmation_candidate', 'Placement start (candidate)', 'transactional', '{candidate.firstName,placement.startDate,agency.name}',
+ 'Your new role starts {{placement.startDate}}',
+ E'Hello {{candidate.firstName}},\n\nCongratulations. This confirms your new role begins on {{placement.startDate}}.\n\n{{agency.name}}'),
+('staff.guarantee_ending', 'Staff alert: guarantee ending', 'staff_notification', '{placement.reference,placement.guaranteeEndsOn,links.placement}',
+ 'Guarantee period ends {{placement.guaranteeEndsOn}} ({{placement.reference}})',
+ E'The recorded guarantee period for placement {{placement.reference}} ends on {{placement.guaranteeEndsOn}}.\n\n{{links.placement}}'),
+('family.post_placement_feedback', 'Post-placement feedback request', 'outreach', '{contact.firstName,agency.name}',
+ 'How is everything going?',
+ E'Hello {{contact.firstName}},\n\nWe would love to hear how things are going. Reply to this email to share any feedback.\n\n{{agency.name}}'),
+('staff.daily_digest', 'Staff daily digest', 'staff_notification', '{digest.summary,digest.taskCount,digest.overdueCount,links.tasks,agency.name}',
+ 'Your day: {{digest.taskCount}} items due',
+ E'Good morning.\n\n{{digest.summary}}\n\nOpen your tasks:\n{{links.tasks}}'),
+('staff.generic_alert', 'Staff alert: action needed', 'staff_notification', '{alert.title,alert.detail,alert.link,agency.name}',
+ '{{alert.title}}',
+ E'{{alert.detail}}\n\n{{alert.link}}');
+
+INSERT INTO email_templates (key, name, category, allowed_variables, system)
+SELECT key, name, category, vars, true FROM seed_templates;
+
+INSERT INTO email_template_versions (template_id, version_number, status, subject, body_text, published_at)
+SELECT t.id, 1, 'published', s.subject, s.body, now()
+FROM seed_templates s JOIN email_templates t ON t.key = s.key;
+
+UPDATE email_templates t SET current_version_id = v.id
+FROM email_template_versions v WHERE v.template_id = t.id AND v.version_number = 1;

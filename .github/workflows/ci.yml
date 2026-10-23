@@ -1,0 +1,58 @@
+name: CI and deploy
+
+# Pull requests into main are checked. A merge (push) to main is checked again and, when it
+# passes, the `deploy` branch is fast-forwarded to that commit. Render deploys from `deploy`.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  promote:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: promote-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Fast-forward deploy to this commit
+        run: |
+          if git ls-remote --exit-code --heads origin deploy > /dev/null; then
+            git fetch origin deploy
+            if git merge-base --is-ancestor "$GITHUB_SHA" origin/deploy; then
+              echo "deploy already includes $GITHUB_SHA"
+              exit 0
+            fi
+            if ! git merge-base --is-ancestor origin/deploy "$GITHUB_SHA"; then
+              echo "::error::deploy has commits that are not on main. Merge them into main, then re-run this workflow."
+              exit 1
+            fi
+          fi
+          git push origin "$GITHUB_SHA:refs/heads/deploy"
+          echo "deploy -> $GITHUB_SHA"
